@@ -26,10 +26,12 @@ __all__ = ['DebianInfo', 'build_dsc', 'expand_tarball', 'expand_zip',
            'apply_patch', 'repack_tarball_with_debianized_dirname',
            'expand_sdist_file', 'stdeb_cfg_options']
 
-DH_MIN_VERS = '9'  # Fundamental to stdeb >= 0.10
-DH_DEFAULT_VERS = 9
+DH_MIN_VERS = '12'  # Fundamental to stdeb >= 0.11
+DH_DEFAULT_VERS = 12
 
-PYTHON_ALL_MIN_VERS = '2.6.6-3'
+# Choose the oldest from Debian oldoldstable and currently supported Ubuntu LTS
+PYTHON_ALL_MIN_VERS = '2.7.16-1'
+PYTHON3_ALL_MIN_VERS = '3.7.3-1'
 
 try:
     # Python 2.x
@@ -196,6 +198,7 @@ stdeb_cfg_options = [
     ('udev-rules=', None, 'file with rules to install to udev'),
     ('python2-depends-name=', None,
      'Python 2 Debian package name used in ${python:Depends}'),
+    ('dh-python3-params=', None, 'parameters passed to dh_python3'),
     ]
 
 stdeb_cmd_bool_opts = [
@@ -1008,6 +1011,8 @@ class DebianInfo:
             self.dh_binary_arch_lines = '\tdh binary-arch'
         self.dh_binary_indep_lines = '\tdh binary-indep'
 
+        dh_python3_params = parse_val(cfg, module_name, 'dh-python3-params')
+
         conflicts = parse_vals(cfg, module_name, 'Conflicts')
         conflicts3 = parse_vals(cfg, module_name, 'Conflicts3')
         breaks = parse_vals(cfg, module_name, 'Breaks')
@@ -1203,6 +1208,7 @@ class DebianInfo:
             'scripts': scripts
         }
 
+        scripts = ''
         if force_x_python3_version and with_python3 and x_python3_version and \
                 x_python3_version[0]:
             # override dh_python3 target to modify the dependencies
@@ -1210,11 +1216,14 @@ class DebianInfo:
             version = x_python3_version[0]
             if not version.endswith('~'):
                 version += '~'
-            self.override_dh_python3 = RULES_OVERRIDE_PYTHON3 % {
-                'scripts': (
+                scripts = (
                     '        sed -i ' +
                     r'"s/\([ =]python3:any (\)>= [^)]*\()\)/\\1%s\\2/g" ' +
                     'debian/%s.substvars') % (version, self.package3)
+        if scripts or dh_python3_params:
+            self.override_dh_python3 = RULES_OVERRIDE_PYTHON3 % {
+                'scripts': scripts,
+                'dh_python3_params': dh_python3_params,
             }
         else:
             self.override_dh_python3 = ''
@@ -1231,7 +1240,7 @@ class DebianInfo:
 
             sequencer_options.append('--with python-virtualenv')
         else:
-            sequencer_options.append('--buildsystem=python_distutils')
+            sequencer_options.append('--buildsystem=pybuild')
             self.override_dh_virtualenv_py = ''
 
         if with_dh_systemd:
@@ -1560,6 +1569,14 @@ def build_dsc(debinfo,
             if len(python3_defaults_version_str) == 0:
                 log.warn('This version of stdeb requires python3-all, '
                          'but you do not have this package installed.')
+            else:
+                if not dpkg_compare_versions(
+                    python3_defaults_version_str, 'ge', PYTHON3_ALL_MIN_VERS
+                ):
+                    log.warn('This version of stdeb requires python-all >= '
+                             '%s. Use stdeb 0.6.0 or older to generate source '
+                             'packages that use python-support.' % (
+                                 PYTHON_ALL_MIN_VERS,))
 
     #    D. restore debianized tree
     os.rename(fullpath_repackaged_dirname+'.debianized',
@@ -1605,7 +1622,7 @@ Maintainer: %(maintainer)s
 %(uploaders)sSection: %(debian_section)s
 Priority: optional
 Build-Depends: %(build_depends)s
-Standards-Version: 3.9.1
+Standards-Version: 4.7.0
 %(source_stanza_extras)s
 
 %(control_py2_stanza)s
@@ -1685,7 +1702,7 @@ override_dh_python2:
 """
 RULES_OVERRIDE_PYTHON3 = """
 override_dh_python3:
-        dh_python3
+        dh_python3 %(dh_python3_params)s
 %(scripts)s
 """
 

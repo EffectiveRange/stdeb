@@ -1,5 +1,42 @@
 See the News section in the README for more details.
 
+Release 0.11.0
+==============
+
+Breaking changes:
+
+* Remove support for running stdeb using Python 2.
+  stdeb scripts are now only expected to run using Python 3. It may be
+  possible to create Python 2 packages using stdeb from Python 3 but this
+  is not well tested. The new minimum Python version is 3.7 and this will
+  be raised periodically in the future. The goal is to support the latest
+  Python 3 releases in Debian Unstable and Testing back to the current
+  oldoldstable.
+* Minimum debhelper version has been raised to 12.
+  Packages are now built using pybuild instead of of python_distutils.
+  The minimum debhelper version will be raised periodically in order
+  to support changes to packaging infrastructure but we will try not
+  to raise it above the current oldoldstable version.
+
+New features:
+
+* Add ``Dh-python3-params``` config setting to stdeb.cfg.
+  The value of this setting will be passed to dh_python3 in the
+  debian/rules file and can be used for specifying options that are not
+  otherwise configurable.
+
+
+Release 0.10.2
+==============
+
+Bugfix release addressing a regression in 0.10.1.
+
+Release 0.10.1
+==============
+
+This is the last planned release of stdeb which supports running stdeb scripts
+with Python 2.7.
+
 Release 0.10.0
 ==============
 

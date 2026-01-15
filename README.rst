@@ -52,6 +52,40 @@ interpreter (and only the Python3 package installs scripts)::
 News
 ----
 
+ * 2025-09-12: **Version 0.11.0**. See the `download page
+   <https://pypi.python.org/pypi/stdeb/0.11.0>`__.
+
+  * Breaking changes:
+
+    * Remove support for running stdeb using Python 2.
+      stdeb scripts are now only expected to run using Python 3. It may be
+      possible to create Python 2 packages using stdeb from Python 3 but this
+      is not well tested. The new minimum Python version is 3.7 and this will
+      be raised periodically in the future. The goal is to support the latest
+      Python 3 releases in Debian Unstable and Testing back to the current
+      oldoldstable.
+    * Minimum debhelper version has been raised to 12.
+      Packages are now built using pybuild instead of of python_distutils.
+      The minimum debhelper version will be raised periodically in order
+      to support changes to packaging infrastructure but we will try not
+      to raise it above the current oldoldstable version.
+
+ * New features:
+
+    * Add ``Dh-python3-params``` config setting to stdeb.cfg.
+      The value of this setting will be passed to dh_python3 in the
+      debian/rules file and can be used for specifying options that are not
+      otherwise configurable.
+
+ * 2025-07-31: **Version 0.10.2**. See the `download page
+   <https://pypi.python.org/pypi/stdeb/0.10.2>`__.
+   This is a bugfix release for 0.10.1 which fixes a regression.
+
+  * Bugfixes:
+
+    * Add a shim function for which on python2. (#215)
+      * Fixes a regression introduced in  #203.
+
  * 2024-11-14: **Version 0.10.1**. See the `download page
    <https://pypi.python.org/pypi/stdeb/0.10.1>`__.
    This is the last planned release of stdeb which supports running stdeb
@@ -809,6 +843,7 @@ All available options:
   Udev-Rules                           file with rules to install to udev
   Python2-Depends-Name                 override Python 2 Debian package name in
                                        ${python:Depends}
+  Dh-python3-params                    parameters passed to dh_python3
 ====================================== =========================================
 
 The option names in stdeb.cfg files are not case sensitive.
